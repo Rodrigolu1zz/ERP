@@ -7,22 +7,19 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  // IconButton, // Não precisamos de IconButton aqui a menos que você queira um menu colapsável
 } from '@mui/material';
-// import MenuIcon from '@mui/icons-material/Menu'; // Não é usado diretamente no App.jsx se a sidebar for persistente
 
 import Sidebar from './components/Sidebar';
 import ProdutosPage from './pages/ProdutosPage';
-import ProdutoForm from './pages/ProdutoForm'; // Importe o ProdutoForm
+import ProdutoForm from './pages/ProdutoForm'; // Certifique-se que está importado
 
-// Defina a largura da sidebar aqui também para consistência
 const drawerWidth = 240;
 
 function App() {
   return (
     <Router>
       <Box sx={{ display: 'flex' }}>
-        <CssBaseline /> {/* Reseta o CSS para um estilo base consistente */}
+        <CssBaseline />
 
         {/* Top Bar (AppBar) */}
         <AppBar
@@ -68,7 +65,6 @@ function App() {
             <Route path="/produtos" element={<ProdutosPage />} />
             <Route path="/produtos/novo" element={<ProdutoForm />} />
             <Route path="/produtos/editar/:id" element={<ProdutoForm />} />
-            {/* Adicione outras rotas aqui conforme você cria novas páginas */}
           </Routes>
         </Box>
       </Box>

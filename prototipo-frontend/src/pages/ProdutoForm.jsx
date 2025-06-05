@@ -1,7 +1,7 @@
 // src/pages/ProdutoForm.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useParams, useLocation } from 'react-router-dom'; // Importe useLocation
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -10,10 +10,10 @@ import {
   Paper,
   Grid,
   CircularProgress,
-  Alert, // Mantido Alert para erros persistentes (opcional, Snackbar já faz bem)
-  Checkbox,
   FormControlLabel,
+  Checkbox,
   Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -22,104 +22,108 @@ import {
 
 const API_BASE_URL = 'http://localhost:8080/api/produtos';
 
+// Função auxiliar para formatar datas para o input type="date"
 const formatDateForInput = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
+  // Garante que a data seja interpretada como UTC para evitar problemas de fuso horário
+  const year = date.getUTCFullYear();
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0');
+  const day = date.getUTCDate().toString().padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 
 function ProdutoForm() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const location = useLocation(); // Hook para acessar o objeto de estado de navegação
+  const location = useLocation();
 
+  // Estado inicial do produto com nomes de campos em camelCase para corresponder ao backend
+  // e valores padrão para evitar 'undefined' e garantir tipos corretos.
   const [produto, setProduto] = useState({
-    // ... (Mantenha todos os campos que já definimos antes, com seus valores padrão)
     ativo: true,
     nome: '',
     codigo: '',
-    nomereduzido: '',
+    nomeReduzido: '',
     unidade: 'UN',
-    idGrupo: null, // Alterado para null
+    idGrupo: null,
     idFabricante: null,
     idFornecedor: null,
     referencia: '',
     embalagem: 0.00,
     cst: '',
     estoqueSeguranca: 0,
-    prazovalidade: 0,
-    comissionaproduto: false,
+    prazoValidade: 0,
+    comissionaProduto: false,
     comissao: 0.00,
-    itemespecial: false,
-    itemcritico: false,
-    materiaprima: false,
-    baixarcomposicao: false,
+    itemEspecial: false,
+    itemCritico: false,
+    materiaPrima: false,
+    baixarComposicao: false,
     localizacao: '',
-    pesobruto: 0.000,
-    pesoliquido: 0.000,
-    dt_ultimacompra: null,
-    quant_ultimacompra: 0.000,
-    descontomax: 0.00,
+    pesoBruto: 0.000,
+    pesoLiquido: 0.000,
+    dtCadastro: null, // Será preenchido pelo backend
+    dtUltimaCompra: null,
+    quantUltimaCompra: 0.000,
+    descontoMax: 0.00,
     observacoes: '',
-    reajusta_auto: false,
-    desconto_tabela: 0.000,
-    desconto_compra: 0.00,
-    icmscompra: 0.00,
-    ipicompra: 0.00,
-    fretecompra: 0.00,
-    outrasdespesas: 0.00,
-    custofinanceiro: 0.00,
-    piscredito: 0.00,
-    cofinscredito: 0.00,
-    custo_liquido: 0.00,
-    custo_medio: 0.00,
-    custo_total: 0.00,
+    reajustaAuto: false,
+    descontoTabela: 0.000,
+    descontoCompra: 0.00,
+    icmsCompra: 0.00,
+    ipiCompra: 0.00,
+    freteCompra: 0.00,
+    outrasDespesas: 0.00,
+    custoFinanceiro: 0.00,
+    pisCredito: 0.00,
+    cofinsCredito: 0.00,
+    custoLiquido: 0.00,
+    custoMedio: 0.00,
+    custoTotal: 0.00,
     markup: 0.00,
-    lucrovenda: 0.00,
-    agregado_icms: 0.00,
-    pisdebito: 0.00,
-    cofinsdebito: 0.00,
-    reducaoicms: 0.00,
-    icmsvenda: 0.00,
-    custovenda1: 0.00,
-    custovenda2: 0.00,
-    custovenda3: 0.00,
-    custovenda4: 0.00,
-    custovenda5: 0.00,
-    preco_sem_lucro: 0.00,
-    preco_sugerido: 0.00,
-    preco_venda: 0.00,
-    preco_venda2: 0.00,
-    preco_venda3: 0.00,
-    preco_venda4: 0.00,
-    preco_venda5: 0.00,
-    margem_liquida: 0.00,
-    margem_media: 0.00,
+    lucroVenda: 0.00,
+    agregadoIcms: 0.00,
+    pisDebito: 0.00,
+    cofinsDebito: 0.00,
+    reducaoIcms: 0.00,
+    icmsVenda: 0.00,
+    custoVenda1: 0.00,
+    custoVenda2: 0.00,
+    custoVenda3: 0.00,
+    custoVenda4: 0.00,
+    custoVenda5: 0.00,
+    precoSemLucro: 0.00,
+    precoSugerido: 0.00,
+    precoVenda: 0.00,
+    precoVenda2: 0.00,
+    precoVenda3: 0.00,
+    precoVenda4: 0.00,
+    precoVenda5: 0.00,
+    margemLiquida: 0.00,
+    margemMedia: 0.00,
     eliminado: false,
-    eliminadopor: null,
-    dt_eliminacao: null,
-    descontomaxgerencia: 0.00,
-    estoque_minimo: 0.000,
-    producao_propria: false,
-    aliqecf: '',
+    eliminadoPor: null,
+    dtEliminacao: null,
+    descontoMaxGerencia: 0.00,
+    estoqueMinimo: 0.000,
+    producaoPropria: false,
+    aliqEcf: '',
     pesavel: false,
-    codigoncm: '',
-    tipo_item: '',
-    cod_gen: '',
-    conta_contabil: '',
-    classiffiscal: '',
+    codigoNcm: '',
+    tipoItem: '',
+    codGen: '',
+    contaContabil: '',
+    classifFiscal: '',
     rendimento: 0.000,
     iat: '',
     ippt: '',
-    cfopei: '',
-    cfopee: '',
-    cfopsi: '',
-    cfopse: '',
-    preco_compra: 0.000,
-    preco_tabela: 0.000,
+    cfopEi: '',
+    cfopEe: '',
+    cfopSi: '',
+    cfopSe: '',
+    precoCompra: 0.000,
+    precoTabela: 0.000,
     segunda: 0.000,
     terca: 0.000,
     quarta: 0.000,
@@ -127,132 +131,132 @@ function ProdutoForm() {
     sexta: 0.000,
     sabado: 0.000,
     domingo: 0.000,
-    pontoreposlj: 0.000,
-    estmaxlj: 0.000,
-    datamovimento: null,
-    tipotributacao: '',
+    pontoReposLj: 0.000,
+    estMaxLj: 0.000,
+    dataMovimento: null,
+    tipoTributacao: '',
     lock: '',
-    palavrachave: '',
-    regimeespecial: false,
-    ex_tipi: '',
+    palavraChave: '',
+    regimeEspecial: false,
+    exTipi: '',
     csosn: '',
-    aliqcredito: 0.000,
-    pedeserial: false,
-    fatorentrada: 0.000,
-    preco_pedido: 0.000,
+    aliqCredito: 0.000,
+    pedeSerial: false,
+    fatorEntrada: 0.000,
+    precoPedido: 0.000,
     gtin: false,
-    atualizapeloncm: false,
+    atualizaPeloNcm: false,
     garantia: '',
     foto: '',
-    divisorentrada: 0.000,
-    descricaosite: '',
+    divisorEntrada: 0.000,
+    descricaoSite: '',
     altura: 0.000,
     largura: 0.000,
     espessura: 0.000,
     expedicao: 0,
-    fatortransf: 0.000,
-    pedidopadrao: 0.000,
+    fatorTransf: 0.000,
+    pedidoPadrao: 0.000,
     maq1: 0.000, maq2: 0.000, maq3: 0.000, maq4: 0.000, maq5: 0.000, maq6: 0.000, maq7: 0.000, maq8: 0.000, maq9: 0.000, maq10: 0.000,
     obra1: 0.000, obra2: 0.000, obra3: 0.000, obra4: 0.000, obra5: 0.000, obra6: 0.000, obra7: 0.000, obra8: 0.000, obra9: 0.000, obra10: 0.000,
-    basefrete: 0.00,
-    icmsfrete: 0.00,
+    baseFrete: 0.00,
+    icmsFrete: 0.00,
     perc2: 0.00, perc3: 0.00, perc4: 0.00, perc5: 0.00,
-    cstpisentrada: '',
-    cstpissaida: '',
-    cstcofinsentrada: '',
-    cstcofinssaida: '',
-    rendimentoun: 0,
-    estoqueretroativo: 0.000,
-    tipo_item_sef2: 0,
+    cstPisEntrada: '',
+    cstPisSaida: '',
+    cstCofinsEntrada: '',
+    cstCofinsSaida: '',
+    rendimentoUn: 0,
+    estoqueRetroativo: 0.000,
+    tipoItemSef2: 0,
     impostos: 0.000,
-    natreceitapiscofins: '',
-    enderecoloja: '',
-    enderecodeposito: '',
-    codigoiniciodia: '',
-    nomeiniciodia: '',
-    unidadeiniciodia: '',
-    datamovimentoiniciodia: null,
-    em_promocao: false,
-    perc_trib_fed: 0.00,
-    perc_trib_est: 0.00,
-    perc_trib_mun: 0.00,
-    id_familia: null,
-    modo_preparo: '',
-    visivel_site: false,
+    natReceitaPiscofins: '',
+    enderecoLoja: '',
+    enderecoDeposito: '',
+    codigoInicioDia: '',
+    nomeInicioDia: '',
+    unidadeInicioDia: '',
+    dataMovimentoInicioDia: null,
+    emPromocao: false,
+    percTribFed: 0.00,
+    percTribEst: 0.00,
+    percTribMun: 0.00,
+    idFamilia: null,
+    modoPreparo: '',
+    visivelSite: false,
     cest: '',
-    verifica_quant_entrada: false,
-    cnpjestab: '',
-    cnpjestabiniciodia: '',
-    codigo_anp: 0,
+    verificaQuantEntrada: false,
+    cnpjEstab: '',
+    cnpjEstabInicioDia: '',
+    codigoAnp: 0,
     fcp: 0.00,
     pontos: 0.00,
-    dt_vendamedia: null,
-    dias_vendamedia: 0,
-    dt_fab: null,
-    dt_val: null,
+    dtVendaMedia: null,
+    diasVendaMedia: 0,
+    dtFab: null,
+    dtVal: null,
     lote: '',
     conteudo: '',
-    setor_expedicao: 0,
-    setor_producao: 0,
-    qt_porconvidado: 0.000,
-    qtpax: 0,
-    qtporpax: 0,
+    setorExpedicao: 0,
+    setorProducao: 0,
+    qtPorConvidado: 0.000,
+    qtPax: 0,
+    qtPorPax: 0,
     pax: false,
-    qtde_atacado: 0.000,
-    quant_atacado2: 0.000, quant_atacado3: 0.000, quant_atacado4: 0.000, quant_atacado5: 0.000,
-    fatormultiplosaida: 0.00,
-    id_editora: null,
+    qtdeAtacado: 0.000,
+    quantAtacado2: 0.000, quantAtacado3: 0.000, quantAtacado4: 0.000, quantAtacado5: 0.000,
+    fatorMultiploSaida: 0.00,
+    idEditora: null,
     autor: '',
-    id_estproducao: 1,
-    ordemmobile: null,
-    visivelmobile: false,
-    controlalote: false,
-    quant_parabonificacao: 0.000,
-    quant_bonificada: 0.000,
-    agregado_icmsantipacao: 0.00,
-    habilita_calcantecipacao: false,
-    indescala: 0,
-    cnpjfab: '',
-    glpderivado: 0.0000,
+    idEstProducao: 1,
+    ordemMobile: null,
+    visivelMobile: false,
+    controlaLote: false,
+    quantParaBonificacao: 0.000,
+    quantBonificada: 0.000,
+    agregadoIcmsAntecipacao: 0.00,
+    habilitaCalcAtecipacao: false,
+    indEscala: 0,
+    cnpjFab: '',
+    glpDerivado: 0.0000,
     glgnn: 0.0000,
     glgni: 0.0000,
-    valorpartida: 0.000,
-    ipisaida: 0.00,
-    forma_cadastro: '',
-    hora_cadastro: '',
-    painel_cozinha: false,
-    turno_producao: 0,
-    cst_ipi_saida: '',
-    cst_ipi_entrada: '',
-    percdescontoauto: 0.00,
+    valorPartida: 0.000,
+    ipiSaida: 0.00,
+    formaCadastro: '',
+    horaCadastro: '',
+    painelCozinha: false,
+    turnoProducao: 0,
+    cstIpiSaida: '',
+    cstIpiEntrada: '',
+    percDescontoAuto: 0.00,
     seg: false, ter: false, qua: false, qui: false, sex: false, sab: false, dom: false,
-    custocompra1: 0.00,
+    custoCompra1: 0.00,
     iss: 0.00,
-    cnaeservico: '',
-    codigoservico: '',
-    dtnf_ultima_entrada: null,
-    dtnf_ultimo_lancamento: null,
-    integracao_site: false,
-    ignorar_referencia: false,
-    fora_de_linha: false,
-    id_linha: null,
+    cnaeServico: '',
+    codigoServico: '',
+    dtNfUltimaEntrada: null,
+    dtNfUltimoLancamento: null,
+    integracaoSite: false,
+    ignorarReferencia: false,
+    foraDeLinha: false,
+    idLinha: null,
     receita1: '', receita2: '', receita3: '', receita4: '', receita5: '',
-    prodnuvem: false,
-    id_localizacao: null,
-    id_enderecoloja: null,
-    id_enderecodeposito: null,
-    conf_conveniencia: false,
-    codbenef_csticms: '',
-    motbenef_csticms: 9,
-    perbenef_csticms: 0.00,
-    aliqbenef_csticms: 0.00,
+    prodNuvem: false,
+    idLocalizacao: null,
+    idEnderecoLoja: null,
+    idEnderecoDeposito: null,
+    confConveniencia: false,
+    codBenefCstIcms: '',
+    motBenefCstIcms: 9,
+    perBenefCstIcms: 0.00,
+    aliqBenefCstIcms: 0.00,
     tara: null,
     cor: '',
     marca: '',
-    metachave: '',
-    metadescricao: '',
-    metatitulo: '',
-    nomeamigavel: '',
+    metaChave: '',
+    metaDescricao: '',
+    metaTitulo: '',
+    nomeAmigavel: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -260,87 +264,65 @@ function ProdutoForm() {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
-  // Efeito para carregar os dados do produto ou para "incluir similar"
+  const showSnackbar = (message, severity) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleSnackbarClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarOpen(false);
+  };
+
   useEffect(() => {
-    // Verifica se há dados de um produto original passados via state da navegação
+    // Lógica para "incluir similar"
     if (location.state && location.state.produtoOriginal) {
       const { produtoOriginal } = location.state;
-      // Define os dados do produto, mas sem o ID, para que seja um novo registro
-      setProduto({
-        ...produtoOriginal,
-        id: null, // MUITO IMPORTANTE: Garante que é um novo cadastro
-        // Limpar campos que devem ser únicos ou redefinidos para um novo produto
-        codigo: '', // O código pode ser único, então limpe-o
-        dt_cadastro: null, // Data de cadastro será definida pelo backend
-        dt_ultimacompra: null,
-        dt_eliminacao: null,
-        dt_vendamedia: null,
-        dt_fab: null,
-        dt_val: null,
-        dataMovimento: null,
-        dataMovimentoInicioDia: null,
-        dtnf_ultima_entrada: null,
-        dtnf_ultimo_lancamento: null,
-        dt_ultimaconsultasefaz: null,
-        dt_proximacompra: null,
-        // E quaisquer outros campos que não devam ser duplicados
-      });
-      // Limpa o state da localização para que o formulário não seja pré-preenchido
-      // novamente se o usuário navegar para a mesma rota sem intenção de duplicar.
-      // Isso pode exigir uma limpeza mais robusta do state na navegação original ou ao sair do formulário.
-      // Por simplicidade aqui, vou deixar a limpeza no navigate que chama este formulário.
-    } else if (id) { // Se um ID estiver presente na URL e não for um "similar"
+      const mappedProduto = {};
+      for (const key in produtoOriginal) {
+        if (Object.hasOwnProperty.call(produtoOriginal, key)) {
+          let value = produtoOriginal[key];
+          if (key.startsWith('dt') || key.startsWith('data')) {
+            value = formatDateForInput(value);
+          }
+          mappedProduto[key] = value;
+        }
+      }
+
+      setProduto(prev => ({
+        ...prev,
+        ...mappedProduto,
+        id: null, // MUITO IMPORTANTE: Garante que é um novo cadastro ao duplicar
+        codigo: '', // O código pode ser único, então limpe-o para um novo produto
+        dtCadastro: null, // A data de cadastro será definida pelo backend
+      }));
+      // Limpar o state da localização para não pré-preencher novamente
+      // Isso é melhor feito ao navegar para esta página, por exemplo:
+      // navigate('/produtos/novo', { state: {} });
+    } else if (id) { // Lógica para edição de produto existente
       setLoading(true);
       axios.get(`${API_BASE_URL}/${id}`)
         .then(response => {
           const produtoData = response.data;
-          // Mapear os nomes das propriedades camelCase do backend para snake_case/padrão do frontend
-          const mappedProduto = {
-            ...produtoData,
-            // Certifique-se de que todos os nomes de campos no frontend correspondem aos do backend
-            // (ex: preco_venda no frontend, precoVenda no backend Java)
-            // Se o backend retorna camelCase, o frontend também usa camelCase para acesso direto.
-            // Para TextFields com `name="preco_venda"`, o estado interno do React usa `produto.preco_venda`.
-            // Então, o mapeamento abaixo é necessário para que os valores do backend (camelCase)
-            // preencham os campos do estado do React (snake_case, conforme definido no state inicial).
-            // Idealmente, seu backend retornaria os nomes de campo que você espera,
-            // ou você teria um DTO de resposta que padroniza os nomes.
-            // Para simplicidade, vou assumir que o frontend espera snake_case para nomes de input
-            // e converte para camelCase antes de enviar para o backend, ou o backend aceita ambos.
-            // O código do ProdutoForm que você já tem usa snake_case em alguns `name` props,
-            // então vamos seguir isso e ajustar aqui.
-            // ... (Copie e cole a lógica de mapeamento do ProdutoForm.jsx anterior aqui,
-            //       garantindo que os nomes no lado direito do '=' (vindos do backend)
-            //       sejam camelCase e os nomes no lado esquerdo (para o estado do React)
-            //       sejam snake_case conforme definido no estado inicial do ProdutoForm.jsx.)
-
-            // Exemplo de mapeamento:
-            nomeReduzido: produtoData.nomeReduzido, // Já está correto
-            comissionaproduto: produtoData.comissionaProduto,
-            itemespecial: produtoData.itemEspecial,
-            itemcritico: produtoData.itemCritico,
-            materiaprima: produtoData.materiaPrima,
-            baixarcomposicao: produtoData.baixarComposicao,
-            // ... e assim por diante para todos os campos que têm nomes diferentes
-            // E formatar as datas
-            dt_ultimacompra: formatDateForInput(produtoData.dtUltimaCompra),
-            dt_cadastro: formatDateForInput(produtoData.dtCadastro),
-            dt_eliminacao: formatDateForInput(produtoData.dtEliminacao),
-            dt_vendamedia: formatDateForInput(produtoData.dtVendaMedia),
-            dt_fab: formatDateForInput(produtoData.dtFab),
-            dt_val: formatDateForInput(produtoData.dtVal),
-            datamovimento: formatDateForInput(produtoData.dataMovimento),
-            datamovimentoiniciodia: formatDateForInput(produtoData.dataMovimentoInicioDia),
-            dtnf_ultima_entrada: formatDateForInput(produtoData.dtnfUltimaEntrada),
-            dtnf_ultimo_lancamento: formatDateForInput(produtoData.dtnfUltimoLancamento),
-            dt_ultimaconsultasefaz: formatDateForInput(produtoData.dtUltimaConsultaSefaz),
-            dt_proximacompra: formatDateForInput(produtoData.dtProximaCompra),
-          };
-
+          const mappedProduto = {};
+          for (const key in produtoData) {
+            if (Object.hasOwnProperty.call(produtoData, key)) {
+              let value = produtoData[key];
+              // Formata datas para o formato 'yyyy-MM-dd'
+              if (key.startsWith('dt') || key.startsWith('data')) {
+                value = formatDateForInput(value);
+              }
+              mappedProduto[key] = value;
+            }
+          }
           setProduto(prev => ({
-            ...prev, // Mantém os valores padrão caso não venham do backend
-            ...mappedProduto // Sobrescreve com os valores do backend
+            ...prev,
+            ...mappedProduto
           }));
+          console.log("Produto carregado para edição:", mappedProduto); // Para depuração
           setLoading(false);
         })
         .catch(err => {
@@ -349,16 +331,43 @@ function ProdutoForm() {
           setLoading(false);
         });
     }
-  }, [id, location.state]); // Adicionar location.state como dependência
+  }, [id, location.state]);
 
-  // ... (O restante do código, incluindo handleChange, handleNumericChange, handleDateChange,
-  //      showSnackbar, handleSnackbarClose e handleSubmit, permanece o mesmo) ...
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProduto(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleNumericChange = (e) => {
+    const { name, value } = e.target;
+    // Converte para número. Se o valor for uma string vazia, salva como null ou 0, dependendo do campo.
+    // Aqui, vamos salvar como null se o campo estiver vazio para permitir campos opcionais,
+    // e deixar o backend lidar com padrões se a coluna não aceitar null.
+    const numericValue = value === '' ? null : Number(value);
+
+    setProduto(prev => ({
+      ...prev,
+      [name]: numericValue
+    }));
+  };
+
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    setProduto(prev => ({
+      ...prev,
+      [name]: value || null // Salva a string da data no formato 'yyyy-MM-dd' ou null se vazio
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setSnackbarOpen(false);
 
+    // Validações básicas antes de enviar
     if (!produto.nome || produto.nome.trim() === '') {
       showSnackbar("O nome do produto é obrigatório.", 'error');
       setLoading(false);
@@ -370,422 +379,115 @@ function ProdutoForm() {
       return;
     }
 
-    try {
-      // Cria um objeto `produtoToSend` para converter nomes de campo de snake_case para camelCase,
-      // se necessário, antes de enviar ao backend.
-      // No entanto, se o seu backend Spring Boot com Jackson já aceita diretamente o snake_case
-      // ou se você está usando o mesmo camelCase para nome da entidade e no frontend,
-      // este mapeamento pode ser simplificado.
-      // Para fins de demonstração, vou assumir que o backend espera camelCase nos nomes JSON
-      // e que o estado do React usa snake_case em alguns inputs.
-      const produtoToSend = {
-        ...produto,
-        // Exemplo de conversão de snake_case para camelCase para o backend,
-        // SE os nomes no `produto` (estado do React) estiverem em snake_case
-        // e o backend espera camelCase.
-        // Se `ProdutoForm.jsx` já usa camelCase para todos os `name` props,
-        // esta etapa não seria tão extensa.
-        nomeReduzido: produto.nomereduzido,
-        comissionaProduto: produto.comissionaproduto,
-        itemEspecial: produto.itemespecial,
-        itemCritico: produto.itemcritico,
-        materiaPrima: produto.materiaprima,
-        baixarComposicao: produto.baixarcomposicao,
-        pesoBruto: produto.pesobruto,
-        pesoLiquido: produto.pesoliquido,
-        dtUltimaCompra: produto.dt_ultimacompra,
-        quantUltimaCompra: produto.quant_ultimacompra,
-        descontoMax: produto.descontomax,
-        reajustaAuto: produto.reajusta_auto,
-        descontoTabela: produto.desconto_tabela,
-        descontoCompra: produto.desconto_compra,
-        icmsCompra: produto.icmscompra,
-        ipiCompra: produto.ipicompra,
-        freteCompra: produto.fretecompra,
-        outrasDespesas: produto.outrasdespesas,
-        custoFinanceiro: produto.custofinanceiro,
-        pisCredito: produto.piscredito,
-        cofinsCredito: produto.cofinscredito,
-        custoLiquido: produto.custo_liquido,
-        custoMedio: produto.custo_medio,
-        custoTotal: produto.custo_total,
-        markup: produto.markup,
-        lucroVenda: produto.lucrovenda,
-        agregadoIcms: produto.agregado_icms,
-        pisDebito: produto.pisdebito,
-        cofinsDebito: produto.cofinsdebito,
-        reducaoIcms: produto.reducaoicms,
-        icmsVenda: produto.icmsvenda,
-        custoVenda1: produto.custovenda1,
-        custoVenda2: produto.custovenda2,
-        custoVenda3: produto.custovenda3,
-        custoVenda4: produto.custovenda4,
-        custoVenda5: produto.custovenda5,
-        precoSemLucro: produto.preco_sem_lucro,
-        precoSugerido: produto.preco_sugerido,
-        precoVenda: produto.preco_venda,
-        precoVenda2: produto.preco_venda2,
-        precoVenda3: produto.preco_venda3,
-        precoVenda4: produto.preco_venda4,
-        precoVenda5: produto.preco_venda5,
-        margemLiquida: produto.margem_liquida,
-        margemMedia: produto.margem_media,
-        eliminadoPor: produto.eliminadopor,
-        dtEliminacao: produto.dt_eliminacao,
-        descontoMaxGerencia: produto.descontomaxgerencia,
-        estoqueMinimo: produto.estoque_minimo,
-        producaoPropria: produto.producao_propria,
-        aliqEcf: produto.aliqecf,
-        pesavel: produto.pesavel,
-        codigoNcm: produto.codigoncm,
-        tipoItem: produto.tipo_item,
-        codGen: produto.cod_gen,
-        contaContabil: produto.conta_contabil,
-        classifFiscal: produto.classiffiscal,
-        rendimento: produto.rendimento,
-        cfopEi: produto.cfopei,
-        cfopEe: produto.cfopee,
-        cfopSi: produto.cfopsi,
-        cfopSe: produto.cfopse,
-        precoCompra: produto.preco_compra,
-        precoTabela: produto.preco_tabela,
-        pontoReposLj: produto.pontoreposlj,
-        estMaxLj: produto.estmaxlj,
-        dataMovimento: produto.datamovimento,
-        tipoTributacao: produto.tipotributacao,
-        palavraChave: produto.palavrachave,
-        regimeEspecial: produto.regimeespecial,
-        exTipi: produto.ex_tipi,
-        aliqCredito: produto.aliqcredito,
-        pedeSerial: produto.pedeserial,
-        fatorEntrada: produto.fatorentrada,
-        precoPedido: produto.preco_pedido,
-        atualizaPeloNcm: produto.atualizapeloncm,
-        divisorEntrada: produto.divisorentrada,
-        descricaoSite: produto.descricaosite,
-        fatorTransf: produto.fatortransf,
-        pedidoPadrao: produto.pedidopadrao,
-        baseFrete: produto.basefrete,
-        icmsFrete: produto.icmsfrete,
-        cstPisEntrada: produto.cstpisentrada,
-        cstPisSaida: produto.cstpissaida,
-        cstCofinsEntrada: produto.cstcofinsentrada,
-        cstCofinsSaida: produto.cstcofinssaida,
-        rendimentoUn: produto.rendimentoun,
-        estoqueRetroativo: produto.estoqueretroativo,
-        tipoItemSef2: produto.tipo_item_sef2,
-        natReceitaPiscofins: produto.natreceitapiscofins,
-        enderecoLoja: produto.enderecoloja,
-        enderecoDeposito: produto.enderecodeposito,
-        codigoInicioDia: produto.codigoiniciodia,
-        nomeInicioDia: produto.nomeiniciodia,
-        unidadeInicioDia: produto.unidadeiniciodia,
-        dataMovimentoInicioDia: produto.datamovimentoiniciodia,
-        emPromocao: produto.em_promocao,
-        percTribFed: produto.perc_trib_fed,
-        percTribEst: produto.perc_trib_est,
-        percTribMun: produto.perc_trib_mun,
-        idFamilia: produto.id_familia,
-        modoPreparo: produto.modo_preparo,
-        visivelSite: produto.visivel_site,
-        verificaQuantEntrada: produto.verifica_quant_entrada,
-        cnpjEstab: produto.cnpjestab,
-        cnpjEstabInicioDia: produto.cnpjestabiniciodia,
-        codigoAnp: produto.codigo_anp,
-        fcp: produto.fcp,
-        dtVendaMedia: produto.dt_vendamedia,
-        diasVendaMedia: produto.dias_vendamedia,
-        dtFab: produto.dt_fab,
-        dtVal: produto.dt_val,
-        setorExpedicao: produto.setor_expedicao,
-        setorProducao: produto.setor_producao,
-        qtPorConvidado: produto.qt_porconvidado,
-        qtPax: produto.qtpax,
-        qtPorPax: produto.qtporpax,
-        qtdeAtacado: produto.qtde_atacado,
-        quantAtacado2: produto.quant_atacado2,
-        quantAtacado3: produto.quant_atacado3,
-        quantAtacado4: produto.quant_atacado4,
-        quantAtacado5: produto.quant_atacado5,
-        fatorMultiploSaida: produto.fatormultiplosaida,
-        idEditora: produto.id_editora,
-        idEstProducao: produto.id_estproducao,
-        ordemMobile: produto.ordemmobile,
-        visivelMobile: produto.visivelmobile,
-        controlaLote: produto.controlalote,
-        quantParaBonificacao: produto.quant_parabonificacao,
-        quantBonificada: produto.quant_bonificada,
-        agregadoIcmsAntecipacao: produto.agregado_icmsantipacao,
-        habilitaCalcAtecipacao: produto.habilita_calcantecipacao,
-        indEscala: produto.indescala,
-        cnpjFab: produto.cnpjfab,
-        glpDerivado: produto.glpderivado,
-        glgnn: produto.glgnn,
-        glgni: produto.glgni,
-        valorPartida: produto.valorpartida,
-        ipiSaida: produto.ipisaida,
-        formaCadastro: produto.forma_cadastro,
-        horaCadastro: produto.hora_cadastro,
-        painelCozinha: produto.painel_cozinha,
-        turnoProducao: produto.turno_producao,
-        cstIpiSaida: produto.cst_ipi_saida,
-        cstIpiEntrada: produto.cst_ipi_entrada,
-        percDescontoAuto: produto.percdescontoauto,
-        custoCompra1: produto.custocompra1,
-        cnaeServico: produto.cnaeservico,
-        codigoServico: produto.codigoservico,
-        dtNfUltimaEntrada: produto.dtnf_ultima_entrada,
-        dtNfUltimoLancamento: produto.dtnf_ultimo_lancamento,
-        integracaoSite: produto.integracao_site,
-        ignorarReferencia: produto.ignorar_referencia,
-        foraDeLinha: produto.fora_de_linha,
-        idLinha: produto.id_linha,
-        prodNuvem: produto.prodnuvem,
-        idLocalizacao: produto.id_localizacao,
-        idEnderecoLoja: produto.id_enderecoloja,
-        idEnderecoDeposito: produto.id_enderecodeposito,
-        confConveniencia: produto.conf_conveniencia,
-        codBenefCstIcms: produto.codbenef_csticms,
-        motBenefCstIcms: produto.motbenef_csticms,
-        perBenefCstIcms: produto.perbenef_csticms,
-        aliqBenefCstIcms: produto.aliqbenef_csticms,
-        metaChave: produto.metachave,
-        metaDescricao: produto.metadescricao,
-        metaTitulo: produto.metatitulo,
-        nomeAmigavel: produto.nomeamigavel,
-        // Campos que não foram mapeados (ex: seg, ter, qua, etc.) devem ser adicionados aqui se forem usados no formulário
-      };
-      // Remova campos que não devem ser enviados ou que serão gerados pelo backend
-      delete produtoToSend.dt_cadastro; // backend vai gerar
-      // delete produtoToSend.id; // se for um novo registro, não envie o ID
+    // Cria um objeto para enviar ao backend.
+    // Como o estado `produto` já está em camelCase, podemos usá-lo diretamente.
+    const produtoToSend = { ...produto };
 
+    // Remover o ID se for um novo cadastro
+    if (!id) {
+      delete produtoToSend.id;
+      // O backend definirá a data de cadastro automaticamente para novos produtos
+      delete produtoToSend.dtCadastro; //
+    }
+    // Para campos BigDecimal ou Integer, se estiverem como null (vazio no input),
+    // e o backend não aceita null, defina para 0 ou outro padrão adequado.
+    // O backend já faz algumas validações, mas é bom ter uma camada aqui.
+    for (const key in produtoToSend) {
+        if (produtoToSend[key] === null || produtoToSend[key] === '') {
+            // Exemplo: se espera um Number, converte null para 0
+            if (typeof produto[key] === 'number') {
+                produtoToSend[key] = 0;
+            }
+            // Exemplo: se espera um Boolean, converte null para false
+            if (typeof produto[key] === 'boolean') {
+                produtoToSend[key] = false;
+            }
+        }
+    }
+
+
+    console.log("Dados a serem enviados:", produtoToSend); // Para depuração
+
+    try {
       if (id) {
-        // Atualizar produto existente
+        // Se há um ID, é uma atualização (PUT)
         await axios.put(`${API_BASE_URL}/${id}`, produtoToSend);
         showSnackbar("Produto atualizado com sucesso!", 'success');
       } else {
-        // Cadastrar novo produto
+        // Se não há ID, é um novo cadastro (POST)
         await axios.post(API_BASE_URL, produtoToSend);
         showSnackbar("Produto cadastrado com sucesso!", 'success');
-        // Limpar o formulário após o cadastro bem-sucedido
+        // Limpar o formulário após o cadastro bem-sucedido para um novo registro
+        // Resetar o estado para os valores iniciais limpos
         setProduto({
-          // ... (Todos os campos com seus valores iniciais, como no estado inicial do useState)
-          // Isso garante que o formulário seja limpo para um novo cadastro
-          ativo: true,
-          nome: '',
-          codigo: '',
-          nomereduzido: '',
-          unidade: 'UN',
-          idGrupo: null, // Alterado para null
-          idFabricante: null,
-          idFornecedor: null,
-          referencia: '',
-          embalagem: 0.00,
-          cst: '',
-          estoqueSeguranca: 0,
-          prazovalidade: 0,
-          comissionaproduto: false,
-          comissao: 0.00,
-          itemespecial: false,
-          itemcritico: false,
-          materiaprima: false,
-          baixarcomposicao: false,
-          localizacao: '',
-          pesobruto: 0.000,
-          pesoliquido: 0.000,
-          dt_ultimacompra: null,
-          quant_ultimacompra: 0.000,
-          descontomax: 0.00,
-          observacoes: '',
-          reajusta_auto: false,
-          desconto_tabela: 0.000,
-          desconto_compra: 0.00,
-          icmscompra: 0.00,
-          ipicompra: 0.00,
-          fretecompra: 0.00,
-          outrasdespesas: 0.00,
-          custofinanceiro: 0.00,
-          piscredito: 0.00,
-          cofinscredito: 0.00,
-          custo_liquido: 0.00,
-          custo_medio: 0.00,
-          custo_total: 0.00,
-          markup: 0.00,
-          lucrovenda: 0.00,
-          agregado_icms: 0.00,
-          pisdebito: 0.00,
-          cofinsdebito: 0.00,
-          reducaoicms: 0.00,
-          icmsvenda: 0.00,
-          custovenda1: 0.00,
-          custovenda2: 0.00,
-          custovenda3: 0.00,
-          custovenda4: 0.00,
-          custovenda5: 0.00,
-          preco_sem_lucro: 0.00,
-          preco_sugerido: 0.00,
-          preco_venda: 0.00,
-          preco_venda2: 0.00,
-          preco_venda3: 0.00,
-          preco_venda4: 0.00,
-          preco_venda5: 0.00,
-          margem_liquida: 0.00,
-          margem_media: 0.00,
-          eliminado: false,
-          eliminadopor: null,
-          dt_eliminacao: null,
-          descontomaxgerencia: 0.00,
-          estoque_minimo: 0.000,
-          producao_propria: false,
-          aliqecf: '',
-          pesavel: false,
-          codigoncm: '',
-          tipo_item: '',
-          cod_gen: '',
-          conta_contabil: '',
-          classiffiscal: '',
-          rendimento: 0.000,
-          iat: '',
-          ippt: '',
-          cfopei: '',
-          cfopee: '',
-          cfopsi: '',
-          cfopse: '',
-          preco_compra: 0.000,
-          preco_tabela: 0.000,
-          segunda: 0.000,
-          terca: 0.000,
-          quarta: 0.000,
-          quinta: 0.000,
-          sexta: 0.000,
-          sabado: 0.000,
-          domingo: 0.000,
-          pontoreposlj: 0.000,
-          estmaxlj: 0.000,
-          datamovimento: null,
-          tipotributacao: '',
-          lock: '',
-          palavrachave: '',
-          regimeespecial: false,
-          ex_tipi: '',
-          csosn: '',
-          aliqcredito: 0.000,
-          pedeserial: false,
-          fatorentrada: 0.000,
-          preco_pedido: 0.000,
-          gtin: false,
-          atualizapeloncm: false,
-          garantia: '',
-          foto: '',
-          divisorentrada: 0.000,
-          descricaosite: '',
-          altura: 0.000,
-          largura: 0.000,
-          espessura: 0.000,
-          expedicao: 0,
-          fatortransf: 0.000,
-          pedidopadrao: 0.000,
-          maq1: 0.000, maq2: 0.000, maq3: 0.000, maq4: 0.000, maq5: 0.000, maq6: 0.000, maq7: 0.000, maq8: 0.000, maq9: 0.000, maq10: 0.000,
-          obra1: 0.000, obra2: 0.000, obra3: 0.000, obra4: 0.000, obra5: 0.000, obra6: 0.000, obra7: 0.000, obra8: 0.000, obra9: 0.000, obra10: 0.000,
-          basefrete: 0.00,
-          icmsfrete: 0.00,
-          perc2: 0.00, perc3: 0.00, perc4: 0.00, perc5: 0.00,
-          cstpisentrada: '',
-          cstpissaida: '',
-          cstcofinsentrada: '',
-          cstcofinssaida: '',
-          rendimentoun: 0,
-          estoqueretroativo: 0.000,
-          tipo_item_sef2: 0,
-          impostos: 0.000,
-          natreceitapiscofins: '',
-          enderecoloja: '',
-          enderecodeposito: '',
-          codigoiniciodia: '',
-          nomeiniciodia: '',
-          unidadeiniciodia: '',
-          datamovimentoiniciodia: null,
-          em_promocao: false,
-          perc_trib_fed: 0.00,
-          perc_trib_est: 0.00,
-          perc_trib_mun: 0.00,
-          id_familia: null,
-          modo_preparo: '',
-          visivel_site: false,
-          cest: '',
-          verifica_quant_entrada: false,
-          cnpjestab: '',
-          cnpjestabiniciodia: '',
-          codigo_anp: 0,
-          fcp: 0.00,
-          pontos: 0.00,
-          dt_vendamedia: null,
-          dias_vendamedia: 0,
-          dt_fab: null,
-          dt_val: null,
-          lote: '',
-          conteudo: '',
-          setor_expedicao: 0,
-          setor_producao: 0,
-          qt_porconvidado: 0.000,
-          qtpax: 0,
-          qtporpax: 0,
-          pax: false,
-          qtde_atacado: 0.000,
-          quant_atacado2: 0.000, quant_atacado3: 0.000, quant_atacado4: 0.000, quant_atacado5: 0.000,
-          fatormultiplosaida: 0.00,
-          id_editora: null,
-          autor: '',
-          id_estproducao: 1,
-          ordemmobile: null,
-          visivelmobile: false,
-          controlalote: false,
-          quant_parabonificacao: 0.000,
-          quant_bonificada: 0.000,
-          agregado_icmsantipacao: 0.00,
-          habilita_calcantecipacao: false,
-          indescala: 0,
-          cnpjfab: '',
-          glpderivado: 0.0000,
-          glgnn: 0.0000,
-          glgni: 0.0000,
-          valorpartida: 0.000,
-          ipisaida: 0.00,
-          forma_cadastro: '',
-          hora_cadastro: '',
-          painel_cozinha: false,
-          turno_producao: 0,
-          cst_ipi_saida: '',
-          cst_ipi_entrada: '',
-          percdescontoauto: 0.00,
-          seg: false, ter: false, qua: false, qui: false, sex: false, sab: false, dom: false,
-          custocompra1: 0.00,
-          iss: 0.00,
-          cnaeservico: '',
-          codigoservico: '',
-          dtnf_ultima_entrada: null,
-          dtnf_ultimo_lancamento: null,
-          integracao_site: false,
-          ignorar_referencia: false,
-          fora_de_linha: false,
-          id_linha: null,
-          receita1: '', receita2: '', receita3: '', receita4: '', receita5: '',
-          prodnuvem: false,
-          id_localizacao: null,
-          id_enderecoloja: null,
-          id_enderecodeposito: null,
-          conf_conveniencia: false,
-          codbenef_csticms: '',
-          motbenef_csticms: 9,
-          perbenef_csticms: 0.00,
-          aliqbenef_csticms: 0.00,
-          tara: null,
-          cor: '',
-          marca: '',
-          metachave: '',
-          metadescricao: '',
-          metatitulo: '',
-          nomeamigavel: '',
+          ativo: true, nome: '', codigo: '', nomeReduzido: '', unidade: 'UN',
+          idGrupo: null, idFabricante: null, idFornecedor: null, referencia: '',
+          embalagem: 0.00, cst: '', estoqueSeguranca: 0, prazoValidade: 0,
+          comissionaProduto: false, comissao: 0.00, itemEspecial: false,
+          itemCritico: false, materiaPrima: false, baixarComposicao: false,
+          localizacao: '', pesoBruto: 0.000, pesoLiquido: 0.000, dtCadastro: null,
+          dtUltimaCompra: null, quantUltimaCompra: 0.000, descontoMax: 0.00,
+          observacoes: '', reajustaAuto: false, descontoTabela: 0.000,
+          descontoCompra: 0.00, icmsCompra: 0.00, ipiCompra: 0.00, freteCompra: 0.00,
+          outrasDespesas: 0.00, custoFinanceiro: 0.00, pisCredito: 0.00,
+          cofinsCredito: 0.00, custoLiquido: 0.00, custoMedio: 0.00,
+          custoTotal: 0.00, markup: 0.00, lucroVenda: 0.00, agregadoIcms: 0.00,
+          pisDebito: 0.00, cofinsDebito: 0.00, reducaoIcms: 0.00, icmsVenda: 0.00,
+          custoVenda1: 0.00, custoVenda2: 0.00, custoVenda3: 0.00, custoVenda4: 0.00,
+          custoVenda5: 0.00, precoSemLucro: 0.00, precoSugerido: 0.00,
+          precoVenda: 0.00, precoVenda2: 0.00, precoVenda3: 0.00, precoVenda4: 0.00,
+          precoVenda5: 0.00, margemLiquida: 0.00, margemMedia: 0.00,
+          eliminado: false, eliminadoPor: null, dtEliminacao: null,
+          descontoMaxGerencia: 0.00, estoqueMinimo: 0.000, producaoPropria: false,
+          aliqEcf: '', pesavel: false, codigoNcm: '', tipoItem: '', codGen: '',
+          contaContabil: '', classifFiscal: '', rendimento: 0.000, iat: '', ippt: '',
+          cfopEi: '', cfopEe: '', cfopSi: '', cfopSe: '', precoCompra: 0.000,
+          precoTabela: 0.000, segunda: 0.000, terca: 0.000, quarta: 0.000,
+          quinta: 0.000, sexta: 0.000, sabado: 0.000, domingo: 0.000,
+          pontoReposLj: 0.000, estMaxLj: 0.000, dataMovimento: null,
+          tipoTributacao: '', lock: '', palavraChave: '', regimeEspecial: false,
+          exTipi: '', csosn: '', aliqCredito: 0.000, pedeSerial: false,
+          fatorEntrada: 0.000, precoPedido: 0.000, gtin: false,
+          atualizaPeloNcm: false, garantia: '', foto: '', divisorEntrada: 0.000,
+          descricaoSite: '', altura: 0.000, largura: 0.000, espessura: 0.000,
+          expedicao: 0, fatorTransf: 0.000, pedidoPadrao: 0.000, maq1: 0.000,
+          maq2: 0.000, maq3: 0.000, maq4: 0.000, maq5: 0.000, maq6: 0.000,
+          maq7: 0.000, maq8: 0.000, maq9: 0.000, maq10: 0.000, obra1: 0.000,
+          obra2: 0.000, obra3: 0.000, obra4: 0.000, obra5: 0.000, obra6: 0.000,
+          obra7: 0.000, obra8: 0.000, obra9: 0.000, obra10: 0.000,
+          baseFrete: 0.00, icmsFrete: 0.00, perc2: 0.00, perc3: 0.00, perc4: 0.00,
+          perc5: 0.00, cstPisEntrada: '', cstPisSaida: '', cstCofinsEntrada: '',
+          cstCofinsSaida: '', rendimentoUn: 0, estoqueRetroativo: 0.000,
+          tipoItemSef2: 0, impostos: 0.000, natReceitaPiscofins: '',
+          enderecoLoja: '', enderecoDeposito: '', codigoInicioDia: '',
+          nomeInicioDia: '', unidadeInicioDia: '', dataMovimentoInicioDia: null,
+          emPromocao: false, percTribFed: 0.00, percTribEst: 0.00,
+          percTribMun: 0.00, idFamilia: null, modoPreparo: '', visivelSite: false,
+          cest: '', verificaQuantEntrada: false, cnpjEstab: '',
+          cnpjEstabInicioDia: '', codigoAnp: 0, fcp: 0.00, pontos: 0.00,
+          dtVendaMedia: null, diasVendaMedia: 0, dtFab: null, dtVal: null,
+          lote: '', conteudo: '', setorExpedicao: 0, setorProducao: 0,
+          qtPorConvidado: 0.000, qtPax: 0, qtPorPax: 0, pax: false,
+          qtdeAtacado: 0.000, quantAtacado2: 0.000, quantAtacado3: 0.000,
+          quantAtacado4: 0.000, quantAtacado5: 0.000, fatorMultiploSaida: 0.00,
+          idEditora: null, autor: '', idEstProducao: 1, ordemMobile: null,
+          visivelMobile: false, controlaLote: false, quantParaBonificacao: 0.000,
+          quantBonificada: 0.000, agregadoIcmsAntecipacao: 0.00,
+          habilitaCalcAtecipacao: false, indEscala: 0, cnpjFab: '',
+          glpDerivado: 0.0000, glgnn: 0.0000, glgni: 0.0000, valorPartida: 0.000,
+          ipiSaida: 0.00, formaCadastro: '', horaCadastro: '',
+          painelCozinha: false, turnoProducao: 0, cstIpiSaida: '',
+          cstIpiEntrada: '', percDescontoAuto: 0.00, seg: false, ter: false,
+          qua: false, qui: false, sex: false, sab: false, dom: false,
+          custoCompra1: 0.00, iss: 0.00, cnaeServico: '', codigoServico: '',
+          dtNfUltimaEntrada: null, dtNfUltimoLancamento: null,
+          integracaoSite: false, ignorarReferencia: false, foraDeLinha: false,
+          idLinha: null, receita1: '', receita2: '', receita3: '', receita4: '',
+          receita5: '', prodNuvem: false, idLocalizacao: null,
+          idEnderecoLoja: null, idEnderecoDeposito: null, confConveniencia: false,
+          codBenefCstIcms: '', motBenefCstIcms: 9, perBenefCstIcms: 0.00,
+          aliqBenefCstIcms: 0.00, tara: null, cor: '', marca: '',
+          metaChave: '', metaDescricao: '', metaTitulo: '', nomeAmigavel: '',
         });
       }
       setTimeout(() => {
@@ -793,8 +495,8 @@ function ProdutoForm() {
       }, 1500);
 
     } catch (err) {
-      console.error("Erro ao salvar produto:", err);
-      const errorMessage = err.response?.data?.message || "Ocorreu um erro ao salvar o produto.";
+      console.error("Erro ao salvar produto:", err.response ? err.response.data : err);
+      const errorMessage = err.response?.data?.message || "Ocorreu um erro ao salvar o produto. Verifique os dados.";
       showSnackbar(errorMessage, 'error');
     } finally {
       setLoading(false);
@@ -812,7 +514,6 @@ function ProdutoForm() {
           {loading && <CircularProgress sx={{ display: 'block', margin: 'auto', mb: 2 }} />}
 
           <Grid container spacing={3}>
-            {/* ... (Os campos do formulário permanecem os mesmos) ... */}
             {/* Campo Ativo */}
             <Grid item xs={12} sm={4}>
               <FormControlLabel
@@ -857,8 +558,8 @@ function ProdutoForm() {
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Nome Reduzido"
-                name="nomereduzido" // Este nome é para o estado do React
-                value={produto.nomereduzido}
+                name="nomeReduzido" // Corrigido para camelCase
+                value={produto.nomeReduzido}
                 onChange={handleChange}
                 fullWidth
                 margin="normal"
@@ -881,9 +582,9 @@ function ProdutoForm() {
             <Grid item xs={12} sm={4}>
               <TextField
                 label="Preço de Venda"
-                name="preco_venda" // Este nome é para o estado do React
+                name="precoVenda" // Corrigido para camelCase
                 type="number"
-                value={produto.preco_venda}
+                value={produto.precoVenda}
                 onChange={handleNumericChange}
                 fullWidth
                 margin="normal"
@@ -909,9 +610,9 @@ function ProdutoForm() {
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Data Última Compra"
-                name="dt_ultimacompra" // Este nome é para o estado do React
+                name="dtUltimaCompra" // Corrigido para camelCase
                 type="date"
-                value={produto.dt_ultimacompra || ''}
+                value={produto.dtUltimaCompra || ''}
                 onChange={handleDateChange}
                 fullWidth
                 margin="normal"
@@ -923,7 +624,7 @@ function ProdutoForm() {
             <Grid item xs={12} sm={6}>
               <TextField
                 label="Estoque de Segurança"
-                name="estoqueSeguranca" // Este nome é para o estado do React (camelCase)
+                name="estoqueSeguranca" // Já estava em camelCase, mantido
                 type="number"
                 value={produto.estoqueSeguranca}
                 onChange={handleNumericChange}
@@ -933,7 +634,7 @@ function ProdutoForm() {
               />
             </Grid>
 
-            {/* Você precisaria expandir para todos os outros campos aqui  */}
+            {/* Adicione outros campos do seu modelo Produto aqui, seguindo o padrão camelCase */}
 
           </Grid>
 

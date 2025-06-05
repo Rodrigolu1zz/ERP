@@ -1,3 +1,4 @@
+// prototipo/src/main/java/com/prototipo/service/ProdutoService.java
 package com.prototipo.service;
 
 import com.prototipo.model.Produto;
@@ -8,68 +9,55 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-@Service // Indica que esta classe é um componente de serviço do Spring.
+@Service
 public class ProdutoService {
 
-    private final ProdutoRepository produtoRepository; // Declaração do repositório.
+    private final ProdutoRepository produtoRepository;
 
-    // Injeção de dependência via construtor: O Spring automaticamente injeta uma instância de ProdutoRepository.
     public ProdutoService(ProdutoRepository produtoRepository) {
         this.produtoRepository = produtoRepository;
     }
 
-    /**
-     * Salva um novo produto no banco de dados.
-     * Se o ID do produto for nulo, define a data de cadastro.
-     * @param produto O objeto Produto a ser salvo.
-     * @return O produto salvo com o ID gerado (se for um novo cadastro).
-     */
     public Produto cadastrarProduto(Produto produto) {
-        // Exemplo de regra de negócio: Definir a data de cadastro automaticamente para novos produtos.
         if (produto.getId() == null) {
             produto.setDtCadastro(LocalDate.now());
+            // Garante que novos produtos não são eliminados por padrão
+            if (produto.getEliminado() == null) {
+                produto.setEliminado(false);
+            }
         }
-
-         if (produto.getNome() == null || produto.getNome().trim().isEmpty()) {
-             throw new IllegalArgumentException("O nome do produto é obrigatório.");
-         }
+        if (produto.getNome() == null || produto.getNome().trim().isEmpty()) {
+            throw new IllegalArgumentException("O nome do produto é obrigatório.");
+        }
         return produtoRepository.save(produto);
     }
 
-    /**
-     * Busca um produto pelo seu ID.
-     * @param id O ID do produto a ser buscado.
-     * @return Um Optional contendo o produto, se encontrado, ou um Optional vazio.
-     */
     public Optional<Produto> buscarPorId(Integer id) {
         return produtoRepository.findById(id);
     }
 
     /**
-     * Lista todos os produtos cadastrados.
-     * @return Uma lista de todos os produtos.
+     * Lista todos os produtos que NÃO foram eliminados logicamente.
+     * @return Uma lista de produtos não eliminados.
      */
     public List<Produto> listarTodosProdutos() {
-        return produtoRepository.findAll();
+        return produtoRepository.findByEliminadoFalse(); // Altera para buscar apenas não eliminados
     }
 
-    /**
-     * Atualiza os dados de um produto existente.
-     * @param id O ID do produto a ser atualizado.
-     * @param produtoDadosNovos O objeto Produto com os dados a serem atualizados.
-     * @return O produto atualizado, ou null se o produto não for encontrado.
-     */
     public Produto atualizarProduto(Integer id, Produto produtoDadosNovos) {
         return produtoRepository.findById(id).map(produtoExistente -> {
-            // Atualiza os campos relevantes. Evite atualizar o ID.
+            // Atualiza todos os campos relevantes.
+            // Para exclusão lógica, o campo 'eliminado' é atualizado aqui.
+            // Certifique-se de que todos os campos que vêm do frontend são mapeados corretamente.
             produtoExistente.setAtivo(produtoDadosNovos.getAtivo());
             produtoExistente.setNome(produtoDadosNovos.getNome());
             produtoExistente.setCodigo(produtoDadosNovos.getCodigo());
             produtoExistente.setNomeReduzido(produtoDadosNovos.getNomeReduzido());
             produtoExistente.setUnidade(produtoDadosNovos.getUnidade());
-            // ... (Você precisaria atualizar todos os campos que deseja permitir alteração)
-            // Para simplificar, vou apenas salvar o objeto completo, mas em um ERP real
-            // você faria uma lógica de atualização campo a campo mais precisa.
+            produtoExistente.setIdGrupo(produtoDadosNovos.getIdGrupo());
+            produtoExistente.setIdFabricante(produtoDadosNovos.getIdFabricante());
+            produtoExistente.setIdFornecedor(produtoDadosNovos.getIdFornecedor());
+            produtoExistente.setReferencia(produtoDadosNovos.getReferencia());
             produtoExistente.setEmbalagem(produtoDadosNovos.getEmbalagem());
             produtoExistente.setCst(produtoDadosNovos.getCst());
             produtoExistente.setEstoqueSeguranca(produtoDadosNovos.getEstoqueSeguranca());
@@ -122,7 +110,7 @@ public class ProdutoService {
             produtoExistente.setPrecoVenda5(produtoDadosNovos.getPrecoVenda5());
             produtoExistente.setMargemLiquida(produtoDadosNovos.getMargemLiquida());
             produtoExistente.setMargemMedia(produtoDadosNovos.getMargemMedia());
-            produtoExistente.setEliminado(produtoDadosNovos.getEliminado());
+            produtoExistente.setEliminado(produtoDadosNovos.getEliminado()); // <<< CAMPO ELIMINADO ATUALIZADO AQUI
             produtoExistente.setEliminadoPor(produtoDadosNovos.getEliminadoPor());
             produtoExistente.setDtEliminacao(produtoDadosNovos.getDtEliminacao());
             produtoExistente.setDescontoMaxGerencia(produtoDadosNovos.getDescontoMaxGerencia());
@@ -274,12 +262,12 @@ public class ProdutoService {
             produtoExistente.setCstIpiEntrada(produtoDadosNovos.getCstIpiEntrada());
             produtoExistente.setPercDescontoAuto(produtoDadosNovos.getPercDescontoAuto());
             produtoExistente.setSeg(produtoDadosNovos.getSeg());
-            produtoExistente.setTer(produtoDadosNovos.getTer());
-            produtoExistente.setQua(produtoDadosNovos.getQua());
-            produtoExistente.setQui(produtoDadosNovos.getQui());
-            produtoExistente.setSex(produtoDadosNovos.getSex());
-            produtoExistente.setSab(produtoDadosNovos.getSab());
-            produtoExistente.setDom(produtoDadosNovos.getDom());
+            produtoExistente.setTerca(produtoDadosNovos.getTerca());
+            produtoExistente.setQuarta(produtoDadosNovos.getQuarta());
+            produtoExistente.setQuinta(produtoDadosNovos.getQuinta());
+            produtoExistente.setSexta(produtoDadosNovos.getSexta());
+            produtoExistente.setSabado(produtoDadosNovos.getSabado());
+            produtoExistente.setDomingo(produtoDadosNovos.getDomingo());
             produtoExistente.setCustoCompra1(produtoDadosNovos.getCustoCompra1());
             produtoExistente.setIss(produtoDadosNovos.getIss());
             produtoExistente.setCnaeServico(produtoDadosNovos.getCnaeServico());
@@ -313,20 +301,23 @@ public class ProdutoService {
             produtoExistente.setNomeAmigavel(produtoDadosNovos.getNomeAmigavel());
 
 
-            return produtoRepository.save(produtoExistente); // Salva as alterações no banco de dados.
-        }).orElse(null); // Retorna null se o produto não for encontrado.
+            return produtoRepository.save(produtoExistente);
+        }).orElse(null);
     }
 
     /**
-     * Exclui um produto pelo seu ID.
-     * @param id O ID do produto a ser excluído.
-     * @return true se o produto foi excluído com sucesso, false caso contrário.
+     * Realiza a exclusão lógica de um produto, definindo o campo 'eliminado' como true.
+     * Além disso, registra a data e o usuário que realizou a eliminação (simulado).
+     * @param id O ID do produto a ser logicamente excluído.
+     * @return true se o produto foi marcado como eliminado com sucesso, false caso contrário.
      */
     public boolean excluirProduto(Integer id) {
-        if (produtoRepository.existsById(id)) {
-            produtoRepository.deleteById(id);
+        return produtoRepository.findById(id).map(produtoExistente -> {
+            produtoExistente.setEliminado(true); // Marca como eliminado
+            produtoExistente.setDtEliminacao(LocalDate.now()); // Registra a data
+            // produtoExistente.setEliminadoPor(idDoUsuarioLogado); // Em um sistema real, você pegaria o ID do usuário logado
+            produtoRepository.save(produtoExistente);
             return true;
-        }
-        return false;
+        }).orElse(false);
     }
 }
